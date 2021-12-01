@@ -4,8 +4,7 @@
 #include "nvs_flash.h"
 #include "esp_err.h"
 
-void init_ap() {
-    ESP_ERROR_CHECK(esp_netif_init());
+void softap_init() {
     esp_netif_create_default_wifi_ap();
     wifi_init_config_t wifi_init_config = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&wifi_init_config));
@@ -13,7 +12,7 @@ void init_ap() {
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
 }
 
-esp_err_t start_ap(const char ssid[], const char password[]) {
+esp_err_t softap_start(const char ssid[], const char password[]) {
     wifi_config_t wifi_config = {
         .ap = {
             .channel = 1,
@@ -39,10 +38,8 @@ esp_err_t start_ap(const char ssid[], const char password[]) {
     return ESP_OK;
 }
 
-void stop_ap() {
+void softap_stop() {
     esp_wifi_stop();
 }
 
-void deinit_ap() {
-    ESP_ERROR_CHECK(esp_netif_deinit());
-}
+void softap_deinit() {}
