@@ -12,6 +12,23 @@ void softap_init() {
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
 }
 
+void softap_deinit() {
+    ESP_ERROR_CHECK(esp_wifi_deinit());
+}
+
+void promis_cb(void *buf, wifi_promiscuous_pkt_type_t type) {
+    printf("Got packet\n");
+}
+
+void softap_promiscuous_enable() {
+    ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(promis_cb));
+    ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
+}
+
+void softap_promiscuous_disable() {
+    ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
+}
+
 esp_err_t softap_start(const char ssid[], const char password[]) {
     wifi_config_t wifi_config = {
         .ap = {
@@ -41,5 +58,3 @@ esp_err_t softap_start(const char ssid[], const char password[]) {
 void softap_stop() {
     esp_wifi_stop();
 }
-
-void softap_deinit() {}
