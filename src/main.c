@@ -6,20 +6,23 @@
 #include "esp_log.h"
 
 #include "softap.h"
+#include "webserver.h"
 #include "attack.h"
 
-static const char* TAG = "Main";
+// static const char* TAG = "Main";
 
 void init() {
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(esp_netif_init());
     softap_init();
+    webserver_init();
     attack_init();
 }
 
 void deinit() {
     attack_deinit();
+    webserver_deinit();
     softap_deinit();
     ESP_ERROR_CHECK(esp_netif_deinit());
 }
@@ -33,6 +36,5 @@ void deinit() {
 void app_main() {
     init();
     softap_start("Boonie", "BeenieWeenie");
-
-    attack_beacon_spam_start();
+    webserver_start();
 }
