@@ -3,6 +3,9 @@
 #include "esp_wifi.h"
 #include "nvs_flash.h"
 #include "esp_err.h"
+#include "esp_log.h"
+
+static const char* TAG = "SoftAP";
 
 void softap_init() {
     esp_netif_create_default_wifi_ap();
@@ -10,26 +13,33 @@ void softap_init() {
     ESP_ERROR_CHECK(esp_wifi_init(&wifi_init_config));
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+    ESP_LOGI(TAG, "Initialized");
 }
 
 void softap_deinit() {
     ESP_ERROR_CHECK(esp_wifi_deinit());
+    ESP_LOGI(TAG, "Uninitialized");
 }
 
 void promis_cb(void *buf, wifi_promiscuous_pkt_type_t type) {
-    printf("Got packet\n");
+    ESP_LOGV(TAG, "Got promiscuous packet");
 }
 
 void softap_promiscuous_enable() {
+    ESP_LOGI(TAG, "Enabling promiscuous mode");
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(promis_cb));
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
+    ESP_LOGI(TAG, "Promiscuous mode enabled");
 }
 
 void softap_promiscuous_disable() {
+    ESP_LOGI(TAG, "Disabling promiscuous mode");
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
+    ESP_LOGI(TAG, "Promiscuous mode disabled");
 }
 
 esp_err_t softap_start(const char ssid[], const char password[]) {
+    ESP_LOGI(TAG, "Starting AP");
     wifi_config_t wifi_config = {
         .ap = {
             .channel = 1,
@@ -45,16 +55,22 @@ esp_err_t softap_start(const char ssid[], const char password[]) {
 
     esp_err_t err;
     if ((err = esp_wifi_set_config(WIFI_IF_AP, &wifi_config)) != ESP_OK){
+        ESP_LOGE(TAG, "Unable to initialize SoftAP config");
+        ESP_LOGE(TAG, "Error: %s", esp_err_to_name(err));
         return err;
     }
 
     if ((err = esp_wifi_start()) != ESP_OK) {
+        ESP_LOGE(TAG, "Unable to start SoftAP");
+        ESP_LOGE(TAG, "Error: %s", esp_err_to_name(err));
         return err;
     }
 
+    ESP_LOGI(TAG, "Started");
     return ESP_OK;
 }
 
 void softap_stop() {
     esp_wifi_stop();
+    ESP_LOGI(TAG, "Stopped");
 }

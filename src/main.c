@@ -3,9 +3,12 @@
 #include "esp_system.h"
 #include "esp_wifi.h"
 #include "nvs_flash.h"
+#include "esp_log.h"
 
 #include "softap.h"
 #include "attack.h"
+
+static const char* TAG = "Main";
 
 void init() {
     ESP_ERROR_CHECK(nvs_flash_init());
@@ -21,26 +24,15 @@ void deinit() {
     ESP_ERROR_CHECK(esp_netif_deinit());
 }
 
+// ESP_LOGE - error (lowest)
+// ESP_LOGW - warning
+// ESP_LOGI - info
+// ESP_LOGD - debug
+// ESP_LOGV - verbose (highest)
+
 void app_main() {
     init();
-
     softap_start("Boonie", "BeenieWeenie");
-    printf("AP Started\n");
 
-    printf("Waiting...\n");
-    vTaskDelay(30000 / portTICK_PERIOD_MS);
-
-    printf("Enabling promiscuous mode\n");
-    softap_promiscuous_enable();
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
-
-    printf("Disabling promiscuous mode\n");
-    softap_promiscuous_disable();
-
-    // printf("Starting deauth attack\n");
-    // attack_deauth_start((mac_addr_t){ 0xde, 0xad, 0xde, 0xad, 0xde, 0xad }, 100);
-    // vTaskDelay(5000 / portTICK_PERIOD_MS);
-    // printf("Ending deauth attack..");
-    // attack_deauth_stop();
-    // printf("I should be able to chill now...");
+    attack_beacon_spam_start();
 }

