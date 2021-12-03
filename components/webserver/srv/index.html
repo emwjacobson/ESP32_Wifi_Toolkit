@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ESP32 Test Web Server!</title>
+    <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+  </head>
+  <body>
+    <div class="header">
+      ESP32 WiFi Toolkit
+    </div>
+
+    <div class="main">
+      <div class="item" id="results">
+        <br>
+        <select name="ssids" id="ssids" size="10">
+          <option value="">Scan for SSIDs</option>
+        </select>
+        <br>
+        <button type="button" onclick="scan_ssids()" class="scan_button">Scan for SSIDs</button>
+        <button type="button" onclick="deauth_target()" class="scan_button">Deauth Target</button>
+      </div>
+      <div class="item">
+        This is an empty item.
+      </div>
+    </div>
+
+<script>
+  function scan_ssids() {
+    var select = document.getElementById("ssids");
+    select.innerHTML = "<option value=\"\">Scanning for SSIDs...</option>";
+
+
+    var req = new XMLHttpRequest();
+    req.open("GET", "/api/get_ssids", false);
+    req.send();
+    raw = JSON.parse(req.responseText);
+
+    select.innerHTML = "";
+    raw.aps.forEach((ap) => {
+      let elem = document.createElement('option');
+      elem.value = ap.bssid;
+      elem.innerHTML = ap.ssid + " (" + ap.bssid + ") (" + ap.authmode + ")";
+      select.appendChild(elem);
+    });
+    console.log(raw);
+  }
+
+  function deauth_target() {
+    var bssid = document.getElementById("ssids").value;
+    var req = new XMLHttpRequest();
+    req.open("POST", "/api/deauth_target", false);
+    req.send("target=" + bssid);
+  }
+</script>
+
+  </body>
+</html>

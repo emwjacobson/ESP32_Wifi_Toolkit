@@ -5,14 +5,17 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
+#define NUM_SSIDS 16
+
 static const char* TAG = "SoftAP";
 
 void softap_init() {
     esp_netif_create_default_wifi_ap();
+    esp_netif_create_default_wifi_sta();
     wifi_init_config_t wifi_init_config = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&wifi_init_config));
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
     ESP_LOGI(TAG, "Initialized");
 }
 
@@ -36,6 +39,17 @@ void softap_promiscuous_disable() {
     ESP_LOGI(TAG, "Disabling promiscuous mode");
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
     ESP_LOGI(TAG, "Promiscuous mode disabled");
+}
+
+uint16_t softap_scan_ssids() {
+    ESP_ERROR_CHECK(esp_wifi_scan_start(NULL, true));
+    uint16_t num_aps;
+    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&num_aps));
+    return num_aps;
+}
+
+void softap_get_scanned_ssids(wifi_ap_record_t ap_list[], uint16_t* num_aps) {
+    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(num_aps, ap_list));
 }
 
 esp_err_t softap_start(const char ssid[], const char password[]) {
