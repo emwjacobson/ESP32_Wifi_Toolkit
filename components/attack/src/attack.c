@@ -153,11 +153,11 @@ void timer_deauth(TimerHandle_t xTimer) {
   ESP_LOGD(TAG, "Deauth timer ran");
 }
 
-void attack_deauth_start(const mac_addr_t sa, uint32_t ms) {
+bool attack_deauth_start(mac_addr_t sa, uint32_t ms) {
   // If there is already a handle, chances are it's already running
   if (handle_deauth != NULL) {
     ESP_LOGI(TAG, "Deauth already in progress!");
-    return;
+    return false;
   }
   target_deauth = sa;
   // Create and start a timer
@@ -165,9 +165,12 @@ void attack_deauth_start(const mac_addr_t sa, uint32_t ms) {
   xTimerStart(handle_deauth, 0);
   ESP_LOGD(TAG, "Deauth timer created, started");
   ESP_LOGI(TAG, "Deauth attack started");
+  return true;
 }
 
 void attack_deauth_stop() {
+  if (handle_deauth == NULL) return;
+
   xTimerStop(handle_deauth, 0);
   xTimerDelete(handle_deauth, 0);
   handle_deauth = NULL;

@@ -45,6 +45,7 @@ uint16_t softap_scan_ssids() {
     ESP_ERROR_CHECK(esp_wifi_scan_start(NULL, true));
     uint16_t num_aps;
     ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&num_aps));
+    ESP_LOGI(TAG, "Scanned %i APs", num_aps);
     return num_aps;
 }
 
@@ -59,7 +60,7 @@ esp_err_t softap_start(const char ssid[], const char password[]) {
             .channel = 1,
             .authmode = WIFI_AUTH_WPA_WPA2_PSK,
             .ssid_hidden = 0,
-            .max_connection = 1,
+            .max_connection = 5,
             .beacon_interval = 1000
         }
     };

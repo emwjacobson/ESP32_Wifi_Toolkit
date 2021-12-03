@@ -14,7 +14,7 @@ void attack_init();
 void attack_deinit();
 void attack_beacon_spam_start();
 void attack_beacon_spam_stop();
-void attack_deauth_start(const mac_addr_t sa, uint32_t ms);
+bool attack_deauth_start(mac_addr_t sa, uint32_t ms);
 void attack_deauth_stop();
 
 #endif

@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>ESP32 Test Web Server!</title>
+    <title>ESP32 WiFi Toolkit</title>
     <link rel="stylesheet" href="styles.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
   </head>
   <body>
     <div class="header">
@@ -11,18 +13,36 @@
     </div>
 
     <div class="main">
-      <div class="item" id="results">
-        <br>
-        <select name="ssids" id="ssids" size="10">
-          <option value="">Scan for SSIDs</option>
-        </select>
-        <br>
-        <button type="button" onclick="scan_ssids()" class="scan_button">Scan for SSIDs</button>
-        <button type="button" onclick="deauth_target()" class="scan_button">Deauth Target</button>
+
+      <div class="item item_center width_100">
+        <div class="item width_100" id="deauth_status">No Deauth Running...</div>
+        <div class="item width_100">
+          <select class="item width_100" id="ssids" size="10">
+            <option value="">Scan for SSIDs</option>
+          </select>
+        </div>
+        <div class="btn item width_100">
+          <button type="button" onclick="scan_ssids()" class="width_100 button">Scan for SSIDs</button>
+        </div>
+        <div class="btn item width_50">
+          <button type="button" onclick="start_deauth()" class="width_100 button">Start Deauth Target</button>
+        </div>
+        <div class="btn item width_50">
+          <button type="button" onclick="stop_deauth()" class="width_100 button">Stop Deauth Target</button>
+        </div>
       </div>
-      <div class="item">
-        This is an empty item.
+
+      <div class="item width_50">Another test item</div>
+
+      <div class="item width_50">How will this display?</div>
+
+      <div class="item width_50">Hopefully its good!</div>
+
+      <div class="item width_100">
+        Disclaimer: This software is made for Educational and Penetration Testing purposes.
+        This should never be used on network that you do not own or have explicit permission to use.
       </div>
+
     </div>
 
 <script>
@@ -30,27 +50,46 @@
     var select = document.getElementById("ssids");
     select.innerHTML = "<option value=\"\">Scanning for SSIDs...</option>";
 
-
     var req = new XMLHttpRequest();
     req.open("GET", "/api/get_ssids", false);
     req.send();
-    raw = JSON.parse(req.responseText);
+    res = JSON.parse(req.responseText);
 
     select.innerHTML = "";
-    raw.aps.forEach((ap) => {
+    res.aps.forEach((ap) => {
       let elem = document.createElement('option');
       elem.value = ap.bssid;
       elem.innerHTML = ap.ssid + " (" + ap.bssid + ") (" + ap.authmode + ")";
       select.appendChild(elem);
     });
-    console.log(raw);
+    console.log(res);
   }
 
-  function deauth_target() {
+  function start_deauth() {
+    var bssid = document.getElementById("ssids").value;
+    if (bssid == "") return;
+    var req = new XMLHttpRequest();
+    req.open("POST", "/api/start_deauth", false);
+    req.setRequestHeader("Content-Type", "application/json");
+    req.send(JSON.stringify({ "target": bssid }));
+
+    res = JSON.parse(req.responseText);
+    status = document.getElementById("deauth_status");
+    if (res.status == "success") {
+      status.innerHTML = "Attack on " + bssid + " running...";
+    } else {
+      status.innerHTML = "Error: " + res.reason;
+    }
+  }
+
+  function stop_deauth() {
     var bssid = document.getElementById("ssids").value;
     var req = new XMLHttpRequest();
-    req.open("POST", "/api/deauth_target", false);
-    req.send("target=" + bssid);
+    req.open("GET", "/api/stop_deauth", false);
+    req.send();
+
+    status = document.getElementById("deauth_status");
+    status.innerHTML = "awdawd...";
   }
 </script>
 
