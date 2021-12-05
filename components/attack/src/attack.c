@@ -1,9 +1,13 @@
 #include <string.h>
+#include <math.h>
+#include <arpa/inet.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/timers.h>
+#include <limits.h>
 #include "esp_system.h"
 #include "esp_wifi.h"
 #include "esp_log.h"
+#include "ping/ping_sock.h"
 #include "attack.h"
 
 static const char* TAG = "Attack";
@@ -176,4 +180,66 @@ void attack_deauth_stop() {
   handle_deauth = NULL;
   ESP_LOGD(TAG, "Deauth timer stopped, deleted");
   ESP_LOGI(TAG, "Deauth attack stopped");
+}
+
+void ping_deinit_handle(esp_ping_handle_t handle) {
+  esp_ping_stop(handle);
+  esp_ping_delete_session(handle);
+}
+
+void ping_success(esp_ping_handle_t handle, void* args) {
+  ip_addr_t addr;
+  esp_ping_get_profile(handle, ESP_PING_PROF_IPADDR, &addr, sizeof(addr));
+  ESP_LOGI(TAG, "IP is UP! %s", inet_ntoa(addr));
+  ping_deinit_handle(handle);
+}
+
+void ping_timeout(esp_ping_handle_t handle, void* args) {
+  ip_addr_t addr;
+  esp_ping_get_profile(handle, ESP_PING_PROF_IPADDR, &addr, sizeof(addr));
+  ESP_LOGI(TAG, "IP is down! %s", inet_ntoa(addr));
+  ping_deinit_handle(handle);
+}
+
+void ping_end(esp_ping_handle_t handle, void* args) {
+  ip_addr_t addr;
+  esp_ping_get_profile(handle, ESP_PING_PROF_IPADDR, &addr, sizeof(addr));
+  ESP_LOGI(TAG, "Deleting... %s", inet_ntoa(addr));
+  esp_ping_delete_session(handle);
+}
+
+void attack_ip_scan(const ip_addr_t ip, uint8_t cidr) {
+  // 192.168.1.1/24
+  // IP:   11000000.10101000.00000001.00000001
+  // CIDR: 11111111.11111111.11111111.00000000
+
+  // 192.168.1.1/30
+  // IP:   11000000.10101000.00000001.00000001
+  // CIDR: 11111111.11111111.11111111.11111100
+  if (cidr > 32) cidr = 32;
+
+  ip_addr_t base_ip = ip;
+  base_ip.u_addr.ip4.addr &= ~(0xFFFFFFFF >> cidr);
+
+  esp_ping_callbacks_t cbs = {
+    .cb_args = NULL,
+    .on_ping_success = ping_success,
+    .on_ping_timeout = ping_timeout,
+    .on_ping_end = NULL
+    // .on_ping_end = ping_end
+  };
+
+  // 00000100
+  esp_ping_handle_t handle[(1 << (32-cidr))];
+  for (uint32_t i=1; i < (1 << (32-cidr)); i++) {
+    esp_ping_config_t config = ESP_PING_DEFAULT_CONFIG();
+    config.timeout_ms = 500;
+    config.count = 1;
+    config.target_addr = base_ip;
+    ESP_ERROR_CHECK(esp_ping_new_session(&config, &cbs, &(handle[i])));
+    ESP_ERROR_CHECK(esp_ping_start(handle[i]));
+    ESP_LOGI(TAG, "%s\n", inet_ntoa(base_ip));
+    (base_ip.u_addr.ip4.addr)++;
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+  }
 }

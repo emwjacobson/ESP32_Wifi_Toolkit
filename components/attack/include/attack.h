@@ -16,5 +16,6 @@ void attack_beacon_spam_start();
 void attack_beacon_spam_stop();
 bool attack_deauth_start(mac_addr_t sa, uint32_t ms);
 void attack_deauth_stop();
+void attack_ip_scan(ip_addr_t ip, uint8_t cidr);
 
 #endif
