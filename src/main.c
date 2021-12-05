@@ -39,7 +39,7 @@ void deinit() {
 
 void app_main() {
     init();
-    softap_start("Boonie", "BeenieWeenie");
+    softap_start(CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD);
     // webserver_start();
 
     ip_addr_t target_addr;

@@ -1,0 +1,15 @@
+menu "Wifi Toolkit Settings"
+
+    config WIFI_SSID
+        string "Wifi SSID"
+        default "Toolkit"
+        help
+            Sets the main AP SSID
+
+    config WIFI_PASSWORD
+        string "Wifi Password"
+        default "password123"
+        help
+            Password for the AP
+
+endmenu
