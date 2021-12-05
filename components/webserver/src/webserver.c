@@ -141,7 +141,6 @@ esp_err_t handle_start_deauth(httpd_req_t* req) {
 
   cJSON_Delete(val);
 
-  ESP_LOGI(TAG, "Im here");
   if (attack_deauth_start(target, 10)) {
     httpd_resp_set_hdr(req, "Content-Type", "application/json");
     return httpd_resp_send(req, "{\"status\": \"success\", \"reason\": \"\"}", HTTPD_RESP_USE_STRLEN);

@@ -66,15 +66,14 @@
   }
 
   function start_deauth() {
-    var bssid = document.getElementById("ssids").value;
     if (bssid == "") return;
     var req = new XMLHttpRequest();
     req.open("POST", "/api/start_deauth", false);
     req.setRequestHeader("Content-Type", "application/json");
     req.send(JSON.stringify({ "target": bssid }));
 
-    res = JSON.parse(req.responseText);
-    status = document.getElementById("deauth_status");
+    var res = JSON.parse(req.responseText);
+    var status = document.getElementById("deauth_status");
     if (res.status == "success") {
       status.innerHTML = "Attack on " + bssid + " running...";
     } else {
@@ -88,7 +87,7 @@
     req.open("GET", "/api/stop_deauth", false);
     req.send();
 
-    status = document.getElementById("deauth_status");
+    var status = document.getElementById("deauth_status");
     status.innerHTML = "awdawd...";
   }
 </script>
