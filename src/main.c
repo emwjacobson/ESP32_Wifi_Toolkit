@@ -13,7 +13,7 @@
 #include "webserver.h"
 #include "attack.h"
 
-// static const char* TAG = "Main";
+static const char* TAG = "Main";
 
 void init() {
     ESP_ERROR_CHECK(nvs_flash_init());
@@ -40,10 +40,7 @@ void deinit() {
 void app_main() {
     init();
     softap_start(CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD);
-    // webserver_start();
-
-    // ESP_LOGI(TAG, "CONNECT TO AP NOW!");
-    // vTaskDelay(20000 / portTICK_PERIOD_MS);
+    webserver_start();
 
     ip_addr_t target_addr = {
         .type = IPADDR_TYPE_V4,
@@ -53,5 +50,16 @@ void app_main() {
             }
         }
     };
-    attack_ip_scan(target_addr, 30);
+    attack_ip_scan_start(target_addr, 24);
+
+    // while (attack_ip_scan_in_progress() == pdTRUE) {
+    //     ESP_LOGI(TAG, "Attack still in progress....");
+    //     vTaskDelay(5000 / portTICK_PERIOD_MS);
+    // }
+
+    ESP_LOGI(TAG, "Attack still in progress....");
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
+
+    ESP_LOGI(TAG, "Attack is done!!");
+    attack_ip_scan_stop();
 }

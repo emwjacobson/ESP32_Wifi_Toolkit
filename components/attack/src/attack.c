@@ -50,11 +50,20 @@ const uint8_t frame_deauth[] = {
     0x02, 0x00,   // 24-25 Reason
 };
 
+typedef struct {
+  ip_addr_t ip;
+  uint8_t cidr;
+} ip_cidr_t;
+
 TimerHandle_t handle_deauth;
-TimerHandle_t handle_beacon_spam;
 mac_addr_t target_deauth;
 
+TimerHandle_t handle_beacon_spam;
+
+TimerHandle_t handle_scan = NULL;
+ip_cidr_t scan_target;
 SemaphoreHandle_t scan_sem = NULL;
+bool scan_in_progress = false;
 
 // SoftAP should be initialized before running this.
 void attack_init() {
@@ -201,7 +210,7 @@ void ping_timeout(esp_ping_handle_t handle, void* args) {
 void ping_end(esp_ping_handle_t handle, void* args) {
   ip_addr_t addr;
   esp_ping_get_profile(handle, ESP_PING_PROF_IPADDR, &addr, sizeof(addr));
-  ESP_LOGI(TAG, "Deleting... " IPSTR, IP2STR(&addr.u_addr.ip4));
+  ESP_LOGD(TAG, "Deleting... " IPSTR, IP2STR(&addr.u_addr.ip4));
   esp_ping_delete_session(handle);
   xSemaphoreGive(scan_sem);
 }
@@ -213,7 +222,8 @@ void increment_ip(ip4_addr_t* ip) {
   ESP_LOGV(TAG, "Incrementing " IPSTR, IP2STR(ip));
 }
 
-void attack_ip_scan(const ip_addr_t ip, uint8_t cidr) {
+// void task_ip_scan(const ip_addr_t ip, uint8_t cidr) {
+void task_ip_scan(TimerHandle_t timer_handle) {
   // 192.168.1.1/24
   // IP:   00000001.00000001.10101000.11000000
   // CIDR: 00000000.11111111.11111111.11111111
@@ -221,10 +231,10 @@ void attack_ip_scan(const ip_addr_t ip, uint8_t cidr) {
   // 192.168.1.1/30
   // IP:   00000001.00000001.10101000.11000000
   // CIDR: 00111111.11111111.11111111.11111111
-  if (cidr > 32) cidr = 32;
+  if (scan_target.cidr > 32) scan_target.cidr = 32;
 
-  ip_addr_t base_ip = ip;
-  base_ip.u_addr.ip4.addr &= (0xFFFFFFFF >> (32-cidr));
+  ip_addr_t base_ip = scan_target.ip;
+  base_ip.u_addr.ip4.addr &= (0xFFFFFFFF >> (32-scan_target.cidr));
 
   esp_ping_callbacks_t cbs = {
     .cb_args = NULL,
@@ -233,17 +243,45 @@ void attack_ip_scan(const ip_addr_t ip, uint8_t cidr) {
     .on_ping_end = ping_end
   };
 
-  esp_ping_handle_t handle[(1 << (32-cidr))];
-  for (uint32_t i=0; i < (1 << (32-cidr)); i++) {
+  // esp_ping_handle_t ping_handle[(1 << (32-scan_target.cidr))];
+  esp_ping_handle_t* ping_handle = malloc(sizeof(esp_ping_handle_t) * (1 << (32-scan_target.cidr)));
+  for (uint32_t i=0; i < (1 << (32-scan_target.cidr)); i++) {
     xSemaphoreTake(scan_sem, portMAX_DELAY);
     esp_ping_config_t config = ESP_PING_DEFAULT_CONFIG();
     config.timeout_ms = 300;
     config.count = 1;
     config.target_addr = base_ip;
     config.data_size = 32;
-    ESP_ERROR_CHECK(esp_ping_new_session(&config, &cbs, &(handle[i])));
-    ESP_ERROR_CHECK(esp_ping_start(handle[i]));
-    ESP_LOGI(TAG, IPSTR, IP2STR(&base_ip.u_addr.ip4));
+    ESP_ERROR_CHECK(esp_ping_new_session(&config, &cbs, &(ping_handle[i])));
+    ESP_ERROR_CHECK(esp_ping_start(ping_handle[i]));
+    ESP_LOGI(TAG, "Scanning " IPSTR, IP2STR(&base_ip.u_addr.ip4));
     increment_ip(&base_ip.u_addr.ip4);
+    if (!scan_in_progress) break; // If scan was stopped, then break out
   }
+  free(ping_handle);
+  scan_in_progress = false;
+  ESP_LOGI(TAG, "IP scan is done!");
+}
+
+void attack_ip_scan_start(const ip_addr_t ip, uint8_t cidr) {
+  if (handle_scan != NULL && xTimerIsTimerActive(handle_scan)) return; // If scan is already active, just return
+  scan_target.ip = ip;
+  scan_target.cidr = cidr;
+  handle_scan = xTimerCreate("Scan timer", 1, pdFALSE, 0, task_ip_scan);
+  scan_in_progress = true;
+  xTimerStart(handle_scan, 0);
+}
+
+// If return is 'true', then scan is in progress
+BaseType_t attack_ip_scan_in_progress() {
+  return scan_in_progress;
+}
+
+// This will return the status of the ip scan
+// This should be called after `attack_ip_scan_status` returns `true`
+void attack_ip_scan_stop() {
+  ESP_LOGI(TAG, "Stopping IP scan");
+  scan_in_progress = false;
+  xTimerStop(handle_scan, 0);
+  xTimerDelete(handle_scan, 0);
 }
