@@ -18,11 +18,16 @@ Some of the features I currently have implemented are:
 Once the code has been uploaded to the ESP32 board, when powered it should create a wifi accesspoint based on the settings you set. When connected, you can navigate to [http://192.168.4.1/](http://192.168.4.1/) to access the Web UI. This is where the main control done.
 
 ## TODO:
+- IP Scanner
+  - Need to figure out a way to log which IPs are up and down
 - Web Server
   - SSID Spammer
   - Change SSID
-  - Local IP Scanner
+  - Integrate IP Scanner
   - Button functions
+  - System Stats
+    - Heap/Memory Usage?
+    - Battery Voltage?
 - Options disable ESPStick specific hardware
 - Handshake capture
 - Make README look nicer

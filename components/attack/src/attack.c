@@ -243,7 +243,6 @@ void task_ip_scan(TimerHandle_t timer_handle) {
     .on_ping_end = ping_end
   };
 
-  // esp_ping_handle_t ping_handle[(1 << (32-scan_target.cidr))];
   esp_ping_handle_t* ping_handle = malloc(sizeof(esp_ping_handle_t) * (1 << (32-scan_target.cidr)));
   for (uint32_t i=0; i < (1 << (32-scan_target.cidr)); i++) {
     xSemaphoreTake(scan_sem, portMAX_DELAY);
@@ -263,6 +262,16 @@ void task_ip_scan(TimerHandle_t timer_handle) {
   ESP_LOGI(TAG, "IP scan is done!");
 }
 
+// Usage:
+// ip_addr_t target_addr = {
+//     .type = IPADDR_TYPE_V4,
+//     .u_addr = {
+//         .ip4 = {
+//             .addr = ESP_IP4TOADDR(192,168,4,0)
+//         }
+//     }
+// };
+// attack_ip_scan_start(target_addr, 24);
 void attack_ip_scan_start(const ip_addr_t ip, uint8_t cidr) {
   if (handle_scan != NULL && xTimerIsTimerActive(handle_scan)) return; // If scan is already active, just return
   scan_target.ip = ip;
@@ -273,7 +282,7 @@ void attack_ip_scan_start(const ip_addr_t ip, uint8_t cidr) {
 }
 
 // If return is 'true', then scan is in progress
-BaseType_t attack_ip_scan_in_progress() {
+bool attack_ip_scan_in_progress() {
   return scan_in_progress;
 }
 

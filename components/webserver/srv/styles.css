@@ -32,6 +32,10 @@ body {
   gap: 5px 0px;
 }
 
+.feature {
+  border-bottom: 1px solid black;
+}
+
 .item {
   box-sizing: border-box;
   padding: 3px;
@@ -49,8 +53,6 @@ body {
   text-align: center;
   font-size: 24px;
   border-bottom: 1px solid black;
-  padding: 5px 0px;
-  margin-bottom: 5px;
 }
 
 .width_100 {

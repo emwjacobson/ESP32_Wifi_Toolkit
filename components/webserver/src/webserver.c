@@ -158,6 +158,11 @@ esp_err_t handle_stop_deauth(httpd_req_t* req) {
   return httpd_resp_send(req, "{\"status\": \"success\", \"reason\": \"\"}", HTTPD_RESP_USE_STRLEN);
 }
 
+esp_err_t handle_start_ssid_spam(httpd_req_t* req) {
+  ESP_LOGI(TAG, "Handling SSID spam");
+  // TODO
+}
+
 esp_err_t get_handler(httpd_req_t* req) {
   ESP_LOGI(TAG, "Got GET URI: %s", req->uri);
   if((strcmp(req->uri, "/") == 0) || (strcmp(req->uri, "/index.html") == 0)) {
@@ -178,6 +183,8 @@ esp_err_t post_handler(httpd_req_t* req) {
   ESP_LOGI(TAG, "Got POST URI: %s", req->uri);
   if (strcmp(req->uri, "/api/start_deauth") == 0) {
     return handle_start_deauth(req);
+  } else if (strcmp(req->uri, "/api/start_ssid_spam") == 0) {
+    return handle_start_ssid_spam(req);
   } else {
     ESP_LOGI(TAG, "%s does not exist.", req->uri);
     return httpd_resp_send_404(req);

@@ -41,25 +41,4 @@ void app_main() {
     init();
     softap_start(CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD);
     webserver_start();
-
-    ip_addr_t target_addr = {
-        .type = IPADDR_TYPE_V4,
-        .u_addr = {
-            .ip4 = {
-                .addr = ESP_IP4TOADDR(192,168,4,0)
-            }
-        }
-    };
-    attack_ip_scan_start(target_addr, 24);
-
-    // while (attack_ip_scan_in_progress() == pdTRUE) {
-    //     ESP_LOGI(TAG, "Attack still in progress....");
-    //     vTaskDelay(5000 / portTICK_PERIOD_MS);
-    // }
-
-    ESP_LOGI(TAG, "Attack still in progress....");
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
-
-    ESP_LOGI(TAG, "Attack is done!!");
-    attack_ip_scan_stop();
 }
