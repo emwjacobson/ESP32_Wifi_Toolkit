@@ -88,6 +88,7 @@
   }
 
   function start_deauth() {
+    var bssid = document.getElementById("ssids").value;
     if (bssid == "") return;
     var req = new XMLHttpRequest();
     req.open("POST", "/api/start_deauth", false);
@@ -118,7 +119,6 @@
     if (ssids.value == "") return;
     ssids = ssids.value.split("\n");
     var payload = {
-      "num_ssids": ssids.length,
       "ssids": ssids
     };
 
@@ -133,6 +133,21 @@
     } else {
       console.log("Failure");
     }
+  }
+
+  function stop_ssid_spam() {
+    var req = new XMLHttpRequest();
+    req.open("GET", "/api/stop_ssid_spam", false);
+    req.send();
+
+    /*
+    var res = JSON.parse(req.responseText);
+    if (res.status == "success") {
+      console.log("Success");
+    } else {
+      console.log("Failure");
+    }
+    */
   }
 </script>
 

@@ -159,8 +159,57 @@ esp_err_t handle_stop_deauth(httpd_req_t* req) {
 }
 
 esp_err_t handle_start_ssid_spam(httpd_req_t* req) {
-  ESP_LOGI(TAG, "Handling SSID spam");
-  // TODO
+  ESP_LOGI(TAG, "Handling Start SSID spam");
+  size_t content_type_len = httpd_req_get_hdr_value_len(req, "Content-Type") + 1;
+  ESP_LOGD(TAG, "Got Content-Type length %i", content_type_len);
+  char content_type[content_type_len];
+  httpd_req_get_hdr_value_str(req, "Content-Type", content_type, content_type_len);
+  ESP_LOGI(TAG, "Got Content-Type = %s", content_type);
+  if (strcmp(content_type, "application/json") != 0) {
+    ESP_LOGI(TAG, "Invalid Content-Type, sending failure");
+    httpd_resp_set_hdr(req, "Content-Type", "application/json");
+    return httpd_resp_send(req, "{\"status\": \"failure\", \"reason\": \"Invalid Content-Type\"}", HTTPD_RESP_USE_STRLEN);
+  }
+  ESP_LOGD(TAG, "Got valid Content-Type");
+
+  ESP_LOGD(TAG, "Post data length: %i", req->content_len);
+  char data[req->content_len + 1];
+  httpd_req_recv(req, data, req->content_len + 1);
+  ESP_LOGD(TAG, "Got post data: %s", data);
+
+  ESP_LOGD(TAG, "Parsing JSON");
+  cJSON* val = cJSON_Parse(data);
+  if (val == NULL) return httpd_resp_send_500(req);
+  ESP_LOGD(TAG, "Finished parsing JSON");
+  cJSON* json_ssids = cJSON_GetObjectItem(val, "ssids");
+  if (json_ssids == NULL) {
+    httpd_resp_set_hdr(req, "Content-Type", "application/json");
+    return httpd_resp_send(req, "{\"status\": \"failure\", \"reason\": \"Missing ssids field\"}", HTTPD_RESP_USE_STRLEN);
+  }
+
+  uint8_t num_ssids = cJSON_GetArraySize(json_ssids);
+  ESP_LOGI(TAG, "Got %i SSIDs", num_ssids);
+  char (* ssids)[33] = malloc(sizeof *ssids * num_ssids); // BE SURE TO FREE THIS IN attack_beacon_spam_stop() !!
+  memset(ssids, 0, sizeof *ssids * num_ssids);
+
+  ESP_LOGI(TAG, "Loading SSIDs %i", num_ssids);
+  for(int i=0; i<num_ssids; i++) {
+    cJSON* item = cJSON_GetArrayItem(json_ssids, i);
+    memcpy(ssids[i], item->valuestring, strlen(item->valuestring));
+  }
+
+  attack_beacon_spam_start(ssids, num_ssids);
+
+  cJSON_Delete(val);
+
+  httpd_resp_set_hdr(req, "Content-Type", "application/json");
+  return httpd_resp_send(req, "{\"status\": \"success\", \"reason\": \"\"}", HTTPD_RESP_USE_STRLEN);
+}
+
+esp_err_t handle_stop_ssid_spam(httpd_req_t* req) {
+  ESP_LOGI(TAG, "Handling Stop SSID spam");
+  attack_beacon_spam_stop();
+  return httpd_resp_send(req, "{\"status\": \"failure\", \"reason\": \"Unimplemented!\"}", HTTPD_RESP_USE_STRLEN);
 }
 
 esp_err_t get_handler(httpd_req_t* req) {
@@ -173,6 +222,8 @@ esp_err_t get_handler(httpd_req_t* req) {
     return handle_get_ssids(req);
   } else if (strcmp(req->uri, "/api/stop_deauth") == 0) {
     return handle_stop_deauth(req);
+  } else if (strcmp(req->uri, "/api/stop_ssid_spam") == 0) {
+    return handle_stop_ssid_spam(req);
   } else {
     ESP_LOGI(TAG, "%s does not exist.", req->uri);
     return httpd_resp_send_404(req);

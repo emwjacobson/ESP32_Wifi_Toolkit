@@ -4,7 +4,7 @@ This project is still a **HEAVY** work in progress. Many things are destined to 
 
 ## Purpose
 
-This project has a hardware component that I designed, and it's available in the [ESPStick Hardware](https://github.com/emwjacobson/ESPStick_Hardware) repo! Some features of this project do depend on this hardware (such as the button actions), but should have options to disable so it can be used on any generic ESP32 board.
+This project has a hardware component that I designed, and it's available in the [ESPStick](https://github.com/emwjacobson/ESPStick) repo! Some features of this project do depend on this hardware (such as the button actions), but should have options to disable so it can be used on any generic ESP32 board.
 
 I decided to make a "Wifi Toolkit" project, as I was always interested in how powerful a small little ESP32 board can be.
 

@@ -58,6 +58,8 @@ typedef struct {
 TimerHandle_t handle_deauth;
 mac_addr_t target_deauth;
 
+char (*spam_ssids)[33];
+uint8_t num_ssids;
 TimerHandle_t handle_beacon_spam;
 
 TimerHandle_t handle_scan = NULL;
@@ -77,7 +79,7 @@ void attack_deinit() {
   ESP_LOGI(TAG, "Unintialized");
 }
 
-void send_beacon(const char ssid[], const mac_addr_t sa) {
+void send_beacon(const char ssid[33], const mac_addr_t sa) {
   uint8_t frame[sizeof(frame_beacon) + strlen(ssid)];
 
   // Copy initial beacon frame
@@ -97,45 +99,29 @@ void send_beacon(const char ssid[], const mac_addr_t sa) {
   ESP_LOGV(TAG, "Beacon sent");
 }
 
-static const char* SPAM_SSIDS[] = {
-  "Starbucks Wifi",
-  "McDonalds Wifi",
-  "Hilton Hotel",
-  "Tipton",
-  "University Wifi",
-  "Free Wifi",
-  "FBI Van #5",
-  "Yell Penis For Password",
-  "Something Stinks",
-  "Taco Bell Wifi",
-  "Pickles",
-  "IveCome4UrPikl",
-  "FiveDollarFootLong",
-  "Cool NFT Man",
-  "BeanieWeenie",
-  "PooperScooper"
-};
+
 
 void timer_beacon_spam(TimerHandle_t xTimer) {
   mac_addr_t mac;
   esp_fill_random((void*)&mac, sizeof(mac_addr_t));
-  for(int i = 0; i < (sizeof(SPAM_SSIDS) / sizeof(SPAM_SSIDS[0])); i++) {
+  for(int i = 0; i < num_ssids; i++) {
     mac.o6 = i;
-    send_beacon(SPAM_SSIDS[i], mac);
+    send_beacon(spam_ssids[i], mac);
     ESP_LOGV(TAG, "Beacon packet sent");
   }
 }
 
-void attack_beacon_spam_start() {
-  // TODO: Implement this, idk what I want to do with it yet.
-  // Random text SSIDs?
+void attack_beacon_spam_start(char (*ssids)[33], uint8_t num) {
   ESP_LOGI(TAG, "Starting beacon spam");
   if (handle_beacon_spam != NULL) {
     ESP_LOGI(TAG, "Beacon spam already in progress!");
     return;
   }
 
-  handle_beacon_spam = xTimerCreate("Beacon Spam", 100 / portTICK_PERIOD_MS, pdTRUE, 0, timer_beacon_spam);
+  spam_ssids = ssids;
+  num_ssids = num;
+
+  handle_beacon_spam = xTimerCreate("Beacon Spam", 10 / portTICK_PERIOD_MS, pdTRUE, 0, timer_beacon_spam);
   xTimerStart(handle_beacon_spam, 0);
   ESP_LOGD(TAG, "Beacon spam timer created, started");
   ESP_LOGI(TAG, "Beacon spam started;");
@@ -146,6 +132,8 @@ void attack_beacon_spam_stop() {
   xTimerStop(handle_beacon_spam, 0);
   xTimerDelete(handle_beacon_spam, 0);
   handle_beacon_spam = NULL;
+  free(spam_ssids);
+  num_ssids = 0;
   ESP_LOGD(TAG, "Beacon spam timer stopped, deleted");
   ESP_LOGI(TAG, "Beacon spam stopped");
 }

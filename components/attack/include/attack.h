@@ -12,7 +12,7 @@ typedef struct {
 
 void attack_init();
 void attack_deinit();
-void attack_beacon_spam_start();
+void attack_beacon_spam_start(char (* ssids)[33], uint8_t num);
 void attack_beacon_spam_stop();
 bool attack_deauth_start(mac_addr_t sa, uint32_t ms);
 void attack_deauth_stop();
