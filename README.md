@@ -28,6 +28,7 @@ Once the code has been uploaded to the ESP32 board, when powered it should creat
   - System Stats
     - Heap/Memory Usage?
     - Battery Voltage?
+- Implement saving data to SD Card
 - Options disable ESPStick specific hardware
 - Handshake capture
 - Make README look nicer

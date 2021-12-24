@@ -128,6 +128,8 @@ void attack_beacon_spam_start(char (*ssids)[33], uint8_t num) {
 }
 
 void attack_beacon_spam_stop() {
+  if (handle_beacon_spam == NULL) return;
+  
   ESP_LOGI(TAG, "Stopping beacon spam");
   xTimerStop(handle_beacon_spam, 0);
   xTimerDelete(handle_beacon_spam, 0);
