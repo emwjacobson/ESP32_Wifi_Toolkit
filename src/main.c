@@ -12,6 +12,7 @@
 #include "softap.h"
 #include "webserver.h"
 #include "attack.h"
+#include "capture.h"
 
 static const char* TAG = "Main";
 
@@ -22,6 +23,7 @@ void init() {
     softap_init();
     webserver_init();
     attack_init();
+    capture_init();
 }
 
 void deinit() {
@@ -39,6 +41,15 @@ void deinit() {
 
 void app_main() {
     init();
-    softap_start(CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD);
-    webserver_start();
+    // softap_start(CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD);
+    // webserver_start();
+
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    ESP_LOGI(TAG, "Starting Capture");
+    capture_start();
+
+    vTaskDelay(20000 / portTICK_PERIOD_MS);
+    
+    ESP_LOGI(TAG, "Stopping Capture");
+    capture_stop();
 }

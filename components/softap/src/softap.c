@@ -25,7 +25,8 @@ void softap_deinit() {
 }
 
 void promis_cb(void *buf, wifi_promiscuous_pkt_type_t type) {
-    ESP_LOGV(TAG, "Got promiscuous packet");
+    wifi_promiscuous_pkt_t* packet = (wifi_promiscuous_pkt_t*)buf;
+    ESP_LOGI(TAG, "GOT PACKET Channel: %i", packet->rx_ctrl.channel);
 }
 
 void softap_promiscuous_enable() {

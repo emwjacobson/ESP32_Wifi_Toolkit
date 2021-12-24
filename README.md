@@ -28,6 +28,8 @@ Once the code has been uploaded to the ESP32 board, when powered it should creat
     - Battery Voltage?
 - Implement saving data to SD Card
 - Options disable ESPStick specific hardware
-- Handshake capture
+- Packet capture
+  - Need to figure out a way to monitor all channels
+    - Disable AP during scan?
 - Make README look nicer
 - Setup menuconfig for some components
