@@ -21,8 +21,6 @@ Once the code has been uploaded to the ESP32 board, when powered it should creat
 - IP Scanner
   - Need to figure out a way to log which IPs are up and down
 - Web Server
-  - SSID Spammer
-  - Change SSID
   - Integrate IP Scanner
   - Button functions
   - System Stats
