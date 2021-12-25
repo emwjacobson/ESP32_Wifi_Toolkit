@@ -33,3 +33,4 @@ Once the code has been uploaded to the ESP32 board, when powered it should creat
     - Disable AP during scan?
 - Make README look nicer
 - Setup menuconfig for some components
+- Convert IP Scanner to a Task rather than Timer

@@ -79,6 +79,11 @@ void attack_deinit() {
   ESP_LOGI(TAG, "Unintialized");
 }
 
+
+// *******************
+// Start Beacon Spam *
+// *******************
+
 void send_beacon(const char ssid[33], const mac_addr_t sa) {
   uint8_t frame[sizeof(frame_beacon) + strlen(ssid)];
 
@@ -98,8 +103,6 @@ void send_beacon(const char ssid[33], const mac_addr_t sa) {
   esp_wifi_80211_tx(WIFI_IF_AP, frame, sizeof(frame), false);
   ESP_LOGV(TAG, "Beacon sent");
 }
-
-
 
 void timer_beacon_spam(TimerHandle_t xTimer) {
   mac_addr_t mac;
@@ -139,6 +142,15 @@ void attack_beacon_spam_stop() {
   ESP_LOGD(TAG, "Beacon spam timer stopped, deleted");
   ESP_LOGI(TAG, "Beacon spam stopped");
 }
+
+// *****************
+// End Beacon Spam *
+// *****************
+
+
+// **************
+// Start Deauth *
+// **************
 
 void send_deauth(const mac_addr_t sa) {
   uint8_t frame[sizeof(frame_deauth)];
@@ -184,6 +196,15 @@ void attack_deauth_stop() {
   ESP_LOGD(TAG, "Deauth timer stopped, deleted");
   ESP_LOGI(TAG, "Deauth attack stopped");
 }
+
+// ************
+// End Deauth *
+// ************
+
+
+// *****************
+// Start Ping Scan *
+// *****************
 
 void ping_success(esp_ping_handle_t handle, void* args) {
   ip_addr_t addr;
@@ -284,3 +305,7 @@ void attack_ip_scan_stop() {
   xTimerStop(handle_scan, 0);
   xTimerDelete(handle_scan, 0);
 }
+
+// ***************
+// End Ping Scan *
+// ***************
