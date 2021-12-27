@@ -12,6 +12,7 @@
 #include "softap.h"
 #include "webserver.h"
 #include "attack.h"
+#include "sd_card.h"
 
 static const char* TAG = "Main";
 
@@ -22,6 +23,7 @@ void init() {
     softap_init();
     webserver_init();
     attack_init();
+    sd_card_init();
 }
 
 void deinit() {
@@ -29,6 +31,7 @@ void deinit() {
     webserver_deinit();
     softap_deinit();
     ESP_ERROR_CHECK(esp_netif_deinit());
+    sd_card_deinit();
 }
 
 // ESP_LOGE - error (lowest)
@@ -39,10 +42,10 @@ void deinit() {
 
 void app_main() {
     init();
-    // softap_start(CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD);
-    // webserver_start();
+    softap_start(CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD);
+    webserver_start();
 
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(10000 / portTICK_PERIOD_MS);
     ESP_LOGI(TAG, "Starting Capture");
     softap_promiscuous_enable();
 

@@ -5,6 +5,8 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
+#include "sd_card.h"
+
 typedef struct {
     uint32_t magic_number;   /* magic number: 0xa1b2c3d4 */
     uint16_t version_major;  /* major version number: 2 */
@@ -51,8 +53,8 @@ void softap_deinit() {
 
 void packet_runner() {
     wifi_promiscuous_pkt_t* packet;
+    pcaprec_hdr_t pcap_packet;
     while(true) {
-        pcaprec_hdr_t pcap_packet;
         if (xQueueReceive(packet_queue, &packet, portMAX_DELAY)) {
             // 1 second = 1000 ms = 1000000 us
             pcap_packet.ts_sec = packet->rx_ctrl.timestamp / 1000000;
@@ -82,6 +84,19 @@ void softap_promiscuous_enable() {
     ESP_LOGI(TAG, "Enabling promiscuous mode");
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(promis_cb));
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
+    
+    pcap_hdr_t pcap_header = {
+        .magic_number = 0xa1b2c3d4,
+        .version_major = 2,
+        .version_minor = 4,
+        .thiszone = 0,
+        .sigfigs = 0,
+        .snaplen = 65535,
+        .network = 105
+    };
+    // TODO: Write header to file
+
+    ESP_LOGI(TAG, "Logged header");
     xTaskCreate(packet_runner, "Packet", 2048, NULL, tskIDLE_PRIORITY, &packet_task);
     ESP_LOGI(TAG, "Promiscuous mode enabled");
 }
@@ -89,7 +104,7 @@ void softap_promiscuous_enable() {
 void softap_promiscuous_disable() {
     ESP_LOGI(TAG, "Disabling promiscuous mode");
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
-    vTaskDelete(packet_task);
+    if (packet_task != NULL) vTaskDelete(packet_task);
 
     // We need to clear the queue to prevent memory leaks!
     wifi_promiscuous_pkt_type_t* packet;

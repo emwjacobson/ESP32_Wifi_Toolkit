@@ -26,11 +26,12 @@ Once the code has been uploaded to the ESP32 board, when powered it should creat
   - System Stats
     - Heap/Memory Usage?
     - Battery Voltage?
-- Implement saving data to SD Card
 - Options disable ESPStick specific hardware
+- Implement saving data to SD Card
 - Packet capture
   - Need to figure out a way to monitor all channels
     - Disable AP during scan?
+  - Integrate with SD Card to save packet file
 - Make README look nicer
-- Setup menuconfig for some components
+- Setup menuconfig for components
 - Convert IP Scanner to a Task rather than Timer
